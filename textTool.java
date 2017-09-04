@@ -1,11 +1,13 @@
 package TextEditor;
 
+
 import java.awt.*;
 import java.awt.event.*;
-import java.text.MessageFormat;
+import java.io.*;
+import java.text.*;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.regex.*;
+
 
 public class textTool extends Frame implements WindowListener {
 	TextArea ta;
@@ -13,8 +15,12 @@ public class textTool extends Frame implements WindowListener {
 	Panel pNorth, pSouth;
 	Label lb1, lb2, lb3;
 	Checkbox op;
+	MenuBar mb;
+	Menu mFile;
+	MenuItem miNew, miOpen, miSaveAs, miExit;
+	
 	boolean optionFlag = false;
-
+	String fileName;
 	String[] btnName = { "Undo", "짝수줄 삭제", "문자삭제", // param1에 지정된 문자들을 삭제하는 기능
 			"빈줄삭제", // 빈 줄 삭제
 			"접두사추가", // Param1과 Param2의 문자열을 각 라인의 앞뒤에 붙이는 기능
@@ -32,11 +38,15 @@ public class textTool extends Frame implements WindowListener {
 	private final String CR_LF = System.getProperty("line.separator");
 
 	private String prevText = "";
-
+	
+	
+	//이벤트 헨들러 드옥 메서드
 	private void registerEventHandler() {
 
+		//윈도우 리스너 
 		addWindowListener(this);
 
+		//옵션체크 리스너 
 		op.addItemListener(new ItemListener() {
 
 			@Override
@@ -46,7 +56,50 @@ public class textTool extends Frame implements WindowListener {
 			}
 
 		});
-
+		
+		//메뉴 만들기 리스너
+		miNew.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				System.out.println("new");
+				ta.setText(" ");
+			}
+		});
+		
+		//메뉴 처리하기
+		miOpen.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				FileDialog fileOpen = new FileDialog(textTool.this, "파일열기");
+				fileOpen.setVisible(true); 
+				fileName = fileOpen.getDirectory() + fileOpen.getFile();
+				System.out.println(fileName);
+				fileOpen(fileName);
+			}
+		});
+		
+		//메뉴 저장하기
+		miSaveAs.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				FileDialog fileSave = new FileDialog(textTool.this,"파일저장",FileDialog.SAVE);
+				fileSave.setVisible(true);
+				fileName = fileSave.getDirectory() + fileSave.getFile();
+				System.out.println(fileName);
+			}
+		});
+		
+		//메뉴 나가기 
+		miExit.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				System.exit(0);       // 프로그램을 종료시킨다. 
+			}
+		});
+			
 		int n = 0;
 		btn[n++].addActionListener(new ActionListener() { // Undo - 작업이전 상태로 되돌림
 			public void actionPerformed(ActionEvent e) {
@@ -394,6 +447,42 @@ public class textTool extends Frame implements WindowListener {
 
 	}
 
+	// 선택된 파일의 내용을 읽어서 보여주는 메서드
+	void fileOpen(String fileName) {
+		FileReader fr;
+		BufferedReader br;
+		StringWriter sw;
+		
+		try {
+			fr = new FileReader(fileName);
+			br = new BufferedReader(fr);
+			sw = new StringWriter();
+			
+			int ch = 0;
+			while((ch = br.read()) != -1) {
+				sw.write(ch);
+			}
+			br.close();
+			ta.setText(sw.toString());
+		}catch(IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	// TextArea의 내용을 지정된 파일에 저장하는 메서드
+	void saveAs(String fileName) {
+		FileWriter fw;
+		BufferedWriter bw;
+		try {
+			fw = new FileWriter(fileName);
+			bw = new BufferedWriter(fw);
+			bw.write(ta.getText());
+			bw.close();
+		} catch(IOException ie) {
+			ie.printStackTrace();
+		}
+	}
+	
 	public static void main(String[] args) {
 		textTool win = new textTool("Text Tool");
 	}
@@ -405,7 +494,7 @@ public class textTool extends Frame implements WindowListener {
 		lb3 = new Label("option", Label.RIGHT);
 		tf1 = new TextField(15);
 		tf2 = new TextField(15);
-
+		
 		ta = new TextArea();
 		pNorth = new Panel();
 		pSouth = new Panel();
@@ -413,7 +502,7 @@ public class textTool extends Frame implements WindowListener {
 		for (int i = 0; i < btn.length; i++) {
 			btn[i] = new Button(btnName[i]);
 		}
-
+		
 		pNorth.setLayout(new FlowLayout());
 		pNorth.add(lb3);
 		pNorth.add(op);
@@ -422,6 +511,25 @@ public class textTool extends Frame implements WindowListener {
 		pNorth.add(lb2);
 		pNorth.add(tf2);
 
+		//메뉴바 생성
+		mb = new MenuBar();
+		mFile = new Menu("File");
+		miNew = new MenuItem("New");
+		miOpen = new MenuItem("Open");
+		miSaveAs = new MenuItem("Save As");
+		miExit = new MenuItem("Exit");
+		
+		//메뉴에 메뉴아이템 추가
+		mFile.add(miNew);
+		mFile.add(miOpen);
+		mFile.add(miSaveAs);
+		//메뉴 분리선 추가
+		mFile.addSeparator();
+		mFile.add(miExit);
+		//메뉴바에 메뉴 추가 mb설정
+		mb.add(mFile);
+		setMenuBar(mb);
+		
 		pSouth.setLayout(new GridLayout(2, 10));
 
 		for (int i = 0; i < btn.length; i++) {
